@@ -18,6 +18,12 @@ function ListarProdutos(){
             const deleteP = useCallback(()=> deletarProduto(p.data.PRDT_ID)  );
             return(<button onClick={deleteP}>DELETE</button> )
     }
+    const CorBotao = p =>{       
+        return(<div className="corFont">{p.value}</div> )
+}
+
+
+
 //     const InputData = p =>{
 //         const dataInput = useCallback(()=> (p.data.PRDT_DT_VALIDADE)  );
 //         return(<input placeholder={dataFormatadaInput(p.data.PRDT_DT_VALIDADE)} type={"date"} /> )
@@ -46,7 +52,7 @@ function ListarProdutos(){
  
     const navigate = useNavigate();
     const [columnDefs, setColumnDefs] = useState([
-        {field: 'PRDT_ID', filter: true, headerName : "ID",editable : false},
+        {field: 'PRDT_ID', filter: true, headerName : "ID",editable : false, cellRenderer : CorBotao},
         {field: 'PRDT_DESCRICAO', filter: true,headerName : "DESCRIÇÃO"},
         {field: 'PRDT_CODIGO', filter: true, headerName : "CÓDIGO"},
         {field: 'PRDT_VALOR', filter: true, headerName : "VALOR", pinned : " right",
