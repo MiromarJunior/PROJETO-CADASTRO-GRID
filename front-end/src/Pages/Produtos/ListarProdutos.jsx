@@ -162,8 +162,9 @@ return(
 
         <div className="centralizar">
         <button onClick={()=>navigate("/")}  > HOME</button>
-        <button onClick={()=>navigate("/cadastrarProdutos/0")}  > CADASTRAR</button>
-        <button onClick={(e)=>updateProdutos(e)}  > SALVAR PRODUTOS</button>
+        <button onClick={()=>navigate("/cadastrarProdutos/0")}  > CADASTRAR NOVO PRODUTO</button>
+        <button onClick={()=>navigate("/cadastroUsuario")}  > CADASTRAR USUÁRIO</button>
+        <button onClick={(e)=>updateProdutos(e)}  > SALVAR ALTERAÇÕES</button>
         </div>  
         <div id="myGrid" className="ag-theme-alpine" style={{width : "100%", height : 400}}>
             <AgGridReact

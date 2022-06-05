@@ -4,6 +4,8 @@ const oracledb = require("oracledb");
 const dbConfig = require("../ConfigDB/configDB.js");
 const app = express();
 app.use(express.json());
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
 
 
 router.get("/listar", async(req, res)=> {
@@ -14,7 +16,7 @@ router.get("/listar", async(req, res)=> {
 
     result = await connection.execute ( 
 
-        ` SELECT  * FROM USUARIOTESTE  `,
+        ` SELECT  * FROM USUARIO  `,
         [],
         { outFormat  :  oracledb.OUT_FORMAT_OBJECT} 
          );
@@ -36,6 +38,70 @@ router.get("/listar", async(req, res)=> {
           }
       }
   }
+
+
+
+
+});
+
+
+router.post("/cadastrarUsuario", async(req, res)=> {
+  let ={nome, usuario, dataNasc, senha, cpf} =req.body
+  let connection = await oracledb.getConnection(dbConfig);
+  let result;
+  let erroAcesso = "";
+  const senhaC = bcrypt.hashSync(senha,saltRounds);
+  let data_brasileira = dataNasc.split('-').reverse().join('/');
+
+
+try {
+  let result = await connection.execute ( 
+    ` SELECT CPF FROM USUARIO 
+    WHERE CPF = :CPF 
+    OR USUARIO.USUARIO = :USUARIO `,
+
+    [cpf,usuario],
+    { outFormat  :  oracledb.OUT_FORMAT_OBJECT,
+      
+    } 
+     );
+     if(result.rows.length > 0){
+      res.send("Usuário ou CPF já cadastrados !\nFavor verificar!!").status(200).end();
+     }else{
+        await connection.execute ( 
+      ` INSERT INTO USUARIO(NOME,
+        CPF,
+        DT_NASCI,
+        USUARIO,
+        SENHA)
+        VALUES(:NOME, :CPF, :DTNASCI, :USUARIO, :SENHA) `,
+  
+      [nome, cpf,data_brasileira,usuario,senhaC],
+      { outFormat  :  oracledb.OUT_FORMAT_OBJECT,
+        autoCommit : true
+      } 
+       );
+       res.send("Usuário Cadastrado com Sucesso !!").status(200).end();
+      
+     }
+    
+} catch (error) {
+  
+    console.error(error);
+    res.send("erro ao Cadastrar usuário").status(500);
+
+   
+    
+}finally {
+    if(connection){
+        try {
+            await connection.close();
+         
+        } catch (error) {
+          console.error(error);              
+        }
+    }
+}
 
 
 
