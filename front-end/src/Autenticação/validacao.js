@@ -21,7 +21,8 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (usuario, senha) => {
     try {
-      const response = await loginUsuario(usuario, senha);
+      let dados = {usuario, senha}
+      const response = await loginUsuario(dados);
       const loggedUser = response.data.Usuario;
       let token = response.data.token;   
    
@@ -34,7 +35,7 @@ export const AuthProvider = ({ children }) => {
       setUser(loggedUser);
       navigate("/listarProdutos");
     
-      
+     
      
       if (token === undefined) {
         alert("Usuário ou Senha inválido");
@@ -45,7 +46,7 @@ export const AuthProvider = ({ children }) => {
         navigate("/");
       }
     } catch (error) {
-      alert("Erro ao tentar conectar !!");
+      alert("Erro ao tentar conectar com servidor !!");
       localStorage.removeItem("token");
       localStorage.removeItem("Usuario");
       api.defaults.headers.Authorization = null;
@@ -72,7 +73,7 @@ export const AuthProvider = ({ children }) => {
 const valor = "teste novo"
   return (
     <AuthContext.Provider
-      value={{ authenticated: !!Usuario, Usuario, loading, login, logout,nomeUser,valor}}
+      value={{ authenticated: !!Usuario, Usuario, loading, login, logout,nomeUser}}
     >
       {children}
     </AuthContext.Provider>

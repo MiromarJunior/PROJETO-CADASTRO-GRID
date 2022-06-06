@@ -118,8 +118,7 @@ router.post("/loginUsuario", async(req, res)=> {
   let senhaLocal = "";
   let validaSenha = false;
   let token = "";
-
-  console.log(usuario);
+  
 try {
 
   result = await connection.execute ( 
@@ -128,8 +127,7 @@ try {
         WHERE USRO.USUARIO =:USUARIO  `,
       [usuario],
       { outFormat  :  oracledb.OUT_FORMAT_OBJECT} 
-       );
-       console.log("ola",result.rows);
+       );     
 
        if(result.rows.length > 0){
          result.rows.map((l)=>{
@@ -137,16 +135,20 @@ try {
            senhaLocal = l.SENHA;
          });
          validaSenha = bcrypt.compareSync(senha,senhaLocal);
-       }else{
+         if(usuarioLocal === usuario && (validaSenha)){
+          token = jwt.sign({},SECRET,{expiresIn : "1h"});
+          res.send({ Usuario: usuarioLocal, token: token }).status(200).end();
+ 
+        }else{
+          res.send("Usuário ou senha inválido").status(200).end();
+        }
+
+
+       }         
+       else{
          res.send("Usuário não encontrado !!").status(200).end();
        }
-       if(usuarioLocal === usuario && (validaSenha)){
-         token = jwt.sign({},SECRET,{expiresIn : "20s"});
-         res.send({ Usuario: usuarioLocal, token: token }).status(200).end();
-
-       }else{
-         res.send("Usuário ou senha inválido").status(200).end();
-       }
+      
       
   
     
@@ -158,7 +160,7 @@ try {
     if(connection){
         try {
             await connection.close();
-            console.log("conexão fechada");
+            
         } catch (error) {
           console.error(error);              
         }

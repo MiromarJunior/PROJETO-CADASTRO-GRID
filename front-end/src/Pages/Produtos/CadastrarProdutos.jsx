@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import apiProdutosService from "../../Service/produtoService";
 import { useNavigate, useParams } from "react-router-dom";
-
-
+import { AuthContext } from "../../Autenticação/validacao";
+const token  = localStorage.getItem("token");
 const CadastrarProdutos = ()=>{
 
     const [descricao,setDescricao] = useState("");
@@ -10,6 +10,7 @@ const CadastrarProdutos = ()=>{
     const [valor, setValor] = useState("");
     const [dataVal, setDataVal] = useState("");
     const {id} = useParams();
+    const {logout} = useContext(AuthContext);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -20,10 +21,13 @@ const CadastrarProdutos = ()=>{
 
     const cadastrarProduto =(e)=>{
         e.preventDefault();
-
-        const dados = {descricao, codigo,valor,dataVal,id};
+        const dados = {descricao, codigo,valor,dataVal,id,token};
         apiProdutosService.saveProdutos(dados)
         .then((res)=>{
+            if(res.data === "erroLogin"){
+                alert("Sessão expirada ! Favor efetuar um novo login");
+                logout();
+            }
             alert(res.data);
             navigate("/listarProdutos");
 
@@ -79,6 +83,7 @@ const CadastrarProdutos = ()=>{
             <button onClick={(e)=>cadastrarProduto(e) }   >SALVAR PRODUTOS</button>
 
             <button onClick={()=>navigate("/listarProdutos")}  > LISTAR PRODUTOS</button>
+            <button onClick={(e)=>logout(e)}  > SAIR</button>
             </div>
 
 

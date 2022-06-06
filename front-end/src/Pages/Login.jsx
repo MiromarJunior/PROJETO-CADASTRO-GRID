@@ -1,6 +1,6 @@
 const { useContext, useState } = require("react");
 const { useNavigate } = require("react-router-dom");
-const { AuthContext } = require("../Autenticação/auth");
+const { AuthContext } = require("../Autenticação/validacao");
 
 
 
@@ -10,11 +10,11 @@ function LoginPage(){
     const [usuario,setUsuario] = useState("");
     const [senha,setSenha] = useState(""); 
     const navigate = useNavigate();
-    const {valor} =useContext(AuthContext);
-console.log(valor);
+    const {login} =useContext(AuthContext);
+
     function acessoLogin(e){
         e.preventDefault();
-      // login(usuario,senha);
+       login(usuario,senha);
     }
     
 

@@ -1,5 +1,7 @@
 const router = require("express").Router();
 const express = require("express");
+const jwt = require("jsonwebtoken");
+const SECRET = process.env.SECRET;
 const oracledb = require("oracledb");
 const dbConfig = require("../ConfigDB/configDB.js");
 const { dataBR } = require("../Service/utilService.js");
@@ -7,27 +9,51 @@ const app = express();
 app.use(express.json());
 
 
-router.get("/listarProduto", async(req, res)=> {
+
+router.post("/listarProduto", async(req, res)=> {
+  let {token} =req.body;
     let connection = await oracledb.getConnection(dbConfig);
     let result;
 
+  //   jwt.verify(token, SECRET, (err, decoded) => {
+  //     if (err) {
+  //         console.log(err, "err");
+  //         erroAcesso = "erroLogin";
+
+  //     } else{         
+          
+  //     }
+  // })
+
+
+
+
+
+
   try {
 
-    result = await connection.execute ( 
+    jwt.verify(token, SECRET, async (err, decoded) => {
+      if (err) {
+          console.log(err, "err");
+          erroAcesso = "erroLogin";
+          res.send("erroLogin").end();
 
-        ` SELECT  * FROM PRODUTO  
-         ORDER BY PRDT_ID DESC
-        `,
-        [],
-        { outFormat  :  oracledb.OUT_FORMAT_OBJECT} 
-         );
-        const objExterno = (result.rows).map(({PRDT_DESCRICAO,PRDT_CODIGO,PRDT_VALOR,PRDT_DT_VALIDADE,PRDT_ID})=>
-        ({PRDT_DESCRICAO : PRDT_DESCRICAO,PRDT_CODIGO : PRDT_CODIGO,
-          PRDT_VALOR : PRDT_VALOR ,PRDT_DT_VALIDADE : dataBR(PRDT_DT_VALIDADE),PRDT_ID : PRDT_ID}))
+      } else{  
+        result = await connection.execute ( 
 
-         res.send(objExterno).status(200);
-        
-    
+          ` SELECT  * FROM PRODUTO  
+           ORDER BY PRDT_ID DESC
+          `,
+          [],
+          { outFormat  :  oracledb.OUT_FORMAT_OBJECT} 
+           );
+          const objExterno = (result.rows).map(({PRDT_DESCRICAO,PRDT_CODIGO,PRDT_VALOR,PRDT_DT_VALIDADE,PRDT_ID})=>
+          ({PRDT_DESCRICAO : PRDT_DESCRICAO,PRDT_CODIGO : PRDT_CODIGO,
+            PRDT_VALOR : PRDT_VALOR ,PRDT_DT_VALIDADE : dataBR(PRDT_DT_VALIDADE),PRDT_ID : PRDT_ID}))
+  
+           res.send(objExterno).status(200).end();           
+      }
+  })      
       
   } catch (error) {
       console.error(error);
@@ -50,7 +76,7 @@ router.get("/listarProduto", async(req, res)=> {
 });
 
 router.post("/cadastrarProduto", async(req, res)=> {
-  let = {descricao, codigo,valor,dataVal,id} = req.body;
+  let = {descricao, codigo,valor,dataVal,id, token} = req.body;
   
   let connection = await oracledb.getConnection(dbConfig);
   let data_brasileira = dataVal.split('-').reverse().join('/');
@@ -59,54 +85,67 @@ router.post("/cadastrarProduto", async(req, res)=> {
 
 try {
 
-  if(id > 0) {
-    await connection.execute( `
 
-    UPDATE PRODUTO
-    SET PRDT_DESCRICAO = :DESCRICAO,
-    PRDT_CODIGO =:CODIGO,
-    PRDT_VALOR = :VALOR,
-    PRDT_DT_VALIDADE = :DATA
-    WHERE  PRDT_ID = :ID   
+
+  jwt.verify(token, SECRET, async (err, decoded) => {
+    if (err) {
+        console.log(err, "err");
+        erroAcesso = "erroLogin";
+        res.send("erroLogin").end();
+
+    } else{  
+      if(id > 0) {
+        await connection.execute( `
+    
+        UPDATE PRODUTO
+        SET PRDT_DESCRICAO = :DESCRICAO,
+        PRDT_CODIGO =:CODIGO,
+        PRDT_VALOR = :VALOR,
+        PRDT_DT_VALIDADE = :DATA
+        WHERE  PRDT_ID = :ID   
+        
+        
+        ` ,[descricao,codigo,valor,data_brasileira,id],{
+    
+          outFormat  :  oracledb.OUT_FORMAT_OBJECT,
+          autoCommit : true
     
     
-    ` ,[descricao,codigo,valor,data_brasileira,id],{
+        });
+    
+        res.send("Atualizado com sucesso !").status(200).end();
+    
+    
+    
+      }else{
+    
+    
+    
+       await connection.execute ( 
+          ` 
+          INSERT INTO PRODUTO
+                (PRDT_DESCRICAO, PRDT_CODIGO, PRDT_VALOR, PRDT_DT_VALIDADE, PRDT_ID)
+                 VALUES
+                (:DESCRICAO,
+                 :CODIGO,
+                  :VALOR,
+               :VALIDADE,
+                 SQ_PRDT.NEXTVAL)       
+          
+          
+          `,
+          [descricao, codigo,valor,data_brasileira],
+          { outFormat  :  oracledb.OUT_FORMAT_OBJECT,
+            autoCommit : true
+          
+          } 
+           );
+           res.send("Cadastrado com sucesso!").status(200).end();
+          }   
+    }
 
-      outFormat  :  oracledb.OUT_FORMAT_OBJECT,
-      autoCommit : true
-
-
-    });
-
-    res.send("Atualizado com sucesso !").status(200);
-
-
-
-  }else{
-
-
-
-   await connection.execute ( 
-      ` 
-      INSERT INTO PRODUTO
-            (PRDT_DESCRICAO, PRDT_CODIGO, PRDT_VALOR, PRDT_DT_VALIDADE, PRDT_ID)
-             VALUES
-            (:DESCRICAO,
-             :CODIGO,
-              :VALOR,
-           :VALIDADE,
-             SQ_PRDT.NEXTVAL)       
-      
-      
-      `,
-      [descricao, codigo,valor,data_brasileira],
-      { outFormat  :  oracledb.OUT_FORMAT_OBJECT,
-        autoCommit : true
-      
-      } 
-       );
-       res.send("Cadastrado com sucesso!").status(200);
-      }
+})   
+  
     
 } catch (error) {
     console.error(error);
@@ -170,26 +209,43 @@ try {
 
 
 router.post("/excluirProduto", async(req, res)=> {
-  let {id} = req.body;
+  let {id,token} = req.body;
   let connection = await oracledb.getConnection(dbConfig);
   let result;
 
-
 try {
 
-   await connection.execute ( 
 
-      ` DELETE PRODUTO PRDT 
-      WHERE PRDT_ID = :ID
-      `,
-      [id],
-      { outFormat  :  oracledb.OUT_FORMAT_OBJECT,
-        autoCommit : true
-      } 
-       );
-       res.send("Produto Excluído com Sucesso").status(200);
-      
-  
+
+  jwt.verify(token, SECRET, async (err, decoded) => {
+    if (err) {
+        console.log(err, "err");
+        erroAcesso = "erroLogin";
+        res.send("erroLogin").end();
+
+    } else{  
+      await connection.execute ( 
+
+        ` DELETE PRODUTO PRDT 
+        WHERE PRDT_ID = :ID
+        `,
+        [id],
+        { outFormat  :  oracledb.OUT_FORMAT_OBJECT,
+          autoCommit : true
+        } 
+         );
+         res.send("Produto Excluído com Sucesso").status(200).end();
+        
+    
+
+              
+    }
+})      
+
+
+
+
+   
     
 } catch (error) {
     console.error(error);
@@ -212,14 +268,10 @@ try {
 });
 
 router.post("/editarListaProdutos", async(req, res)=> {
-  let {lista} = req.body;
+  let {lista,token} = req.body;
   let connection = await oracledb.getConnection(dbConfig);
   let result;
-lista.map((k)=>{
-console.log(k.PRDT_DT_VALIDADE);
-  // console.log(k.PRDT_VALOR.replace(",","."))
 
-})
 function formataValorString(valor){
   if(typeof(valor) === "string"){
   return  valor.replace(",",".");
@@ -228,41 +280,48 @@ function formataValorString(valor){
 }
 
 try {
-  let cont = 1 ;
-  lista.map(async (l)=>{
-    try {
-      
-   await connection.execute (
-      ` UPDATE PRODUTO
-      SET PRDT_DESCRICAO = '${l.PRDT_DESCRICAO}',
-      PRDT_CODIGO = '${l.PRDT_CODIGO}',
-      PRDT_VALOR = ${formataValorString(l.PRDT_VALOR)},
-      PRDT_DT_VALIDADE = '${l.PRDT_DT_VALIDADE}'
-      WHERE PRDT_ID = '${l.PRDT_ID}' `,
+  jwt.verify(token, SECRET, async (err, decoded) => {
+    if (err) {
+        console.log(err, "err");
+        erroAcesso = "erroLogin";
+        res.send("erroLogin").end();
 
-      [],
-      { outFormat  :  oracledb.OUT_FORMAT_OBJECT,
-        autoCommit : true} 
-         
-       );   
+    } else{  
+
+      lista.map(async (l)=>{
+        try {
+          
+       await connection.execute (
+          ` UPDATE PRODUTO
+          SET PRDT_DESCRICAO = '${l.PRDT_DESCRICAO}',
+          PRDT_CODIGO = '${l.PRDT_CODIGO}',
+          PRDT_VALOR = ${formataValorString(l.PRDT_VALOR)},
+          PRDT_DT_VALIDADE = '${l.PRDT_DT_VALIDADE}'
+          WHERE PRDT_ID = '${l.PRDT_ID}' `,
     
-    
+          [],
+          { outFormat  :  oracledb.OUT_FORMAT_OBJECT,
+            autoCommit : true} 
+             
+           );          
+          
+          }  catch(error){
+            console.log("Erro ao registrar", error)   
      
-      
-      }  catch(error){
-        console.log("Erro ao registrar", error)   
- 
+        }
+      })      
+          
+          res.send("Produtos Atualizados").status(200).end();
+               
     }
-  })
-    
+})   
 
-      
-      res.send("Produtos Atualizados");
+  
   
     
 } catch (error) {
     console.error(error);
-    res.send("erro de conexao").status(500);
+    res.send("erro ao tentar atualizar produto").status(500).end();
     
 }finally {
     if(connection){

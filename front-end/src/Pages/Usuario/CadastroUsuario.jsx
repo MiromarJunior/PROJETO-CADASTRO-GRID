@@ -29,16 +29,8 @@ const CadastroUsuario =()=>{
     }
     return(
         <div>
-
-            <div className="centralizarInput">
-            <button onClick={()=>navigate("/")}  > HOME</button>
-        
-        <button onClick={()=>navigate("/listarProdutos")}  > LISTAR PRODUTOS</button>
-        <button onClick={()=>navigate("/cadastrarProdutos/0")}  > CADASTRAR NOVO PRODUTO</button>
-   
-       
-                <form >
-                  
+            <div className="centralizarInput">       
+                <form >                  
                     <label>Nome Completo</label><br/>
                     <input onChange={(e)=>setNome(e.target.value)} type={"text"} placeholder={"Nome Usuário"} />
                     <br/>
@@ -62,6 +54,7 @@ const CadastroUsuario =()=>{
                     
                 </form> <br/>
                 <button onClick={(e)=> cadastraUsuario(e)}>CADASTRAR USUÁRIO</button>
+                <button onClick={()=>navigate("/")}  > LOGIN</button>
 
             </div>
         </div>

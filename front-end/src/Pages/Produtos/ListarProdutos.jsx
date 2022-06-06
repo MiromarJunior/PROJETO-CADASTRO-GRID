@@ -1,18 +1,19 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import apiProdutosService, { dataFormatadaInput, updateListaProd } from "../../Service/produtoService";
 import { AgGridReact } from 'ag-grid-react';
-import { dataBR, valorBR } from "../../Service/utilService";
+import { valorBR } from "../../Service/utilService";
+import { AuthContext } from "../../Autenticação/validacao";
 
 
 let rowImmutableStore;
 
-function ListarProdutos(){
-
-
-
-
-    
+function ListarProdutos(){   
+    const [listaProdutos, setListaProdutos] = useState([]);
+    const [rowData, setRowData] = useState(); 
+    const navigate = useNavigate(); 
+    const token = localStorage.getItem("token");
+    const {logout} = useContext(AuthContext);
 
     const ButtonDelete = p =>{
             const deleteP = useCallback(()=> deletarProduto(p.data.PRDT_ID)  );
@@ -32,12 +33,17 @@ function ListarProdutos(){
     
 
     const deletarProduto = useCallback((id)=>{
-        let dados = {id};
+        let dados = {id,token};     
         if(window.confirm("deseja excluir o item ?") ){                   
             apiProdutosService.deleteProduto(dados)
             .then((res)=>{
+                if(res.data === "erroLogin"){
+                    window.alert("Sessão expirada, Favor efetuar um novo login");
+                    logout();
+                }else{
                 alert(res.data); 
                 buscarProdutos(); 
+                }
             })
             .catch((res)=>{
                 console.log(res);
@@ -47,10 +53,7 @@ function ListarProdutos(){
     });
     
 
-    const [listaProdutos, setListaProdutos] = useState([]);
-    const [rowData, setRowData] = useState();
- 
-    const navigate = useNavigate();
+   
     const [columnDefs, setColumnDefs] = useState([
         {field: 'PRDT_ID', filter: true, headerName : "ID",editable : false, cellRenderer : CorBotao},
         {field: 'PRDT_DESCRICAO', filter: true,headerName : "DESCRIÇÃO"},
@@ -96,7 +99,7 @@ function ListarProdutos(){
             const newItem = {...data};
             newItem[field] = e.newValue;
             console.log('onCellEditRequest, updating ' + field + ' to ' + newValue);
-            rowImmutableStore = rowImmutableStore.map((oldItem)=>oldItem.id == newItem.id ? newItem : oldItem);
+            rowImmutableStore = rowImmutableStore.map((oldItem)=>oldItem.id === newItem.id ? newItem : oldItem);
             setRowData(rowImmutableStore);
         },
         [rowImmutableStore]
@@ -115,23 +118,36 @@ function ListarProdutos(){
 
 
     function buscarProdutos(){
-        apiProdutosService.getProdutos()
+        let dados = {token};
+        apiProdutosService.getProdutos(dados)
         .then((res)=>{
+           if(res.data === "erroLogin"){
+               window.alert("Sessão expirada, Favor efetuar um novo login");
+               logout();
+           }else{
             setListaProdutos(res.data); 
             (res.data).forEach((item, index)=>(item.id = index));
             rowImmutableStore = res.data;
             setRowData(rowImmutableStore); 
+
+           }
+            
         })
         .catch((res)=>{
             console.log(res);
         })
     }
     const updateProdutos = ()=>{          
-        let dados = {lista : rowData};
+        let dados = {lista : rowData,token};
         updateListaProd(dados)
         .then((res)=>{
+            if(res.data === "erroLogin"){
+                window.alert("Sessão expirada, Favor efetuar um novo login");
+                logout();
+            }else{
             alert(res.data)
             buscarProdutos();
+            }
 
         })
         .catch((err)=>{
@@ -161,10 +177,10 @@ return(
         <h1>Listar Produtos</h1>
 
         <div className="centralizar">
-        <button onClick={()=>navigate("/")}  > HOME</button>
+        <button onClick={()=>navigate("/home")}  > HOME</button>
         <button onClick={()=>navigate("/cadastrarProdutos/0")}  > CADASTRAR NOVO PRODUTO</button>
-        <button onClick={()=>navigate("/cadastroUsuario")}  > CADASTRAR USUÁRIO</button>
         <button onClick={(e)=>updateProdutos(e)}  > SALVAR ALTERAÇÕES</button>
+        <button onClick={(e)=>logout(e)}  > SAIR</button>
         </div>  
         <div id="myGrid" className="ag-theme-alpine" style={{width : "100%", height : 400}}>
             <AgGridReact
@@ -179,8 +195,7 @@ return(
                 enableRangeSelection={true}
                 paginationPageSize={10}    
                 editType={'fullRow'}            
-                paginationAutoPageSize={[5,10,15]}
-      
+                paginationAutoPageSize={[5,10,15]}      
 
                 
                 
@@ -189,7 +204,20 @@ return(
 
         </div>
 
-        {/* <div className="centralizar tableLista" >
+        
+
+
+    </div>
+
+)
+
+}
+
+export default ListarProdutos;
+
+
+
+/** <div className="centralizar tableLista" >
          <table>
          <tbody>
                  <tr style={{backgroundColor : "silver"}} >
@@ -233,13 +261,4 @@ return(
 
 
              </table>  
-             </div>        */}
-
-
-    </div>
-
-)
-
-}
-
-export default ListarProdutos;
+             </div>        */ 

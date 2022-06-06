@@ -3,8 +3,8 @@ const { default : axios} = require("axios");
 const baseURL = process.env.REACT_APP_API_URL;
 
 
-const getProdutos = ()=>{
-    return axios.get(`${baseURL}listarProduto`);
+const getProdutos = (data)=>{
+    return axios.post(`${baseURL}listarProduto`,data);
 } 
 const getProdutosID = data=>{
     return axios.post(`${baseURL}listarProdutoID`,data);
