@@ -5,5 +5,12 @@ const baseURL = process.env.REACT_APP_API_URL;
 const saveUsuario = data=>{
     return axios.post(`${baseURL}cadastrarUsuario`,data);
 } 
+const loginUsuario = (usuario,senha)=>{
+    return axios.post(`${baseURL}loginUsuario`,(usuario,senha));
+} 
 
-module.exports = {saveUsuario};
+
+
+const api = axios.create({baseURL});
+
+module.exports = {api,saveUsuario,loginUsuario};

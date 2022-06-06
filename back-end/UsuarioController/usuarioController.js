@@ -6,6 +6,8 @@ const app = express();
 app.use(express.json());
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
+const jwt = require("jsonwebtoken");
+const SECRET = process.env.SECRET;
 
 
 router.get("/listar", async(req, res)=> {
@@ -108,6 +110,65 @@ try {
 
 });
 
+router.post("/loginUsuario", async(req, res)=> {
+  let {usuario, senha} =req.body;
+  let connection = await oracledb.getConnection(dbConfig);
+  let result;
+  let  = usuarioLocal = "";
+  let senhaLocal = "";
+  let validaSenha = false;
+  let token = "";
+
+  console.log(usuario);
+try {
+
+  result = await connection.execute ( 
+
+      ` SELECT *FROM USUARIO USRO
+        WHERE USRO.USUARIO =:USUARIO  `,
+      [usuario],
+      { outFormat  :  oracledb.OUT_FORMAT_OBJECT} 
+       );
+       console.log("ola",result.rows);
+
+       if(result.rows.length > 0){
+         result.rows.map((l)=>{
+           usuarioLocal = l.USUARIO;
+           senhaLocal = l.SENHA;
+         });
+         validaSenha = bcrypt.compareSync(senha,senhaLocal);
+       }else{
+         res.send("Usuário não encontrado !!").status(200).end();
+       }
+       if(usuarioLocal === usuario && (validaSenha)){
+         token = jwt.sign({},SECRET,{expiresIn : "20s"});
+         res.send({ Usuario: usuarioLocal, token: token }).status(200).end();
+
+       }else{
+         res.send("Usuário ou senha inválido").status(200).end();
+       }
+      
+  
+    
+} catch (error) {
+    console.error(error);
+    res.send("erro ao tentar logar").status(500);
+    
+}finally {
+    if(connection){
+        try {
+            await connection.close();
+            console.log("conexão fechada");
+        } catch (error) {
+          console.error(error);              
+        }
+    }
+}
+
+
+
+
+});
 
 
 
