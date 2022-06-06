@@ -4,16 +4,20 @@ import apiProdutosService, { dataFormatadaInput, updateListaProd } from "../../S
 import { AgGridReact } from 'ag-grid-react';
 import { valorBR } from "../../Service/utilService";
 import { AuthContext } from "../../Autenticação/validacao";
+import { ICellRendererParams } from "ag-grid-community";
 
 
-let rowImmutableStore;
+let rowImmutableStore = [];
 
+let newData = [];
 function ListarProdutos(){   
     const [listaProdutos, setListaProdutos] = useState([]);
-    const [rowData, setRowData] = useState(); 
+    const [rowData, setRowData] = useState([]); 
     const navigate = useNavigate(); 
     const token = localStorage.getItem("token");
     const {logout} = useContext(AuthContext);
+
+
 
     const ButtonDelete = p =>{
             const deleteP = useCallback(()=> deletarProduto(p.data.PRDT_ID)  );
@@ -83,6 +87,40 @@ function ListarProdutos(){
       
       ]);
 
+      
+    
+      const getRowId = useCallback((params) => params.data.id, []);
+      const adicionar = ()=>{        
+          newData.push({
+                id : rowData.length+1, 
+                                     
+                PRDT_DESCRICAO: '',
+                PRDT_CODIGO: "",
+                PRDT_VALOR: 0,
+                PRDT_DT_VALIDADE: 'dd/mm/yyyy',               
+              })        
+                        
+             newData.concat(newData)
+          
+             let lista   = newData.concat(rowImmutableStore);            
+             setRowData(lista);
+              return lista
+           
+        }
+     
+
+        // const adicionar = useCallback((addIndex) => {
+        //     const newItems = [
+        //         addRow(),
+                
+
+              
+        //     ];
+         
+        // },[rowData]);
+ 
+
+
     const defaultColDef = useMemo(()=>({
         sortable : true,
         editable : true,
@@ -90,24 +128,25 @@ function ListarProdutos(){
         flex : 1
     }),[]);
 
-    const getRowId = useCallback((params) => params.data.id, []);
-    const onCellEditRequest = useCallback(
-        (e)=>{
-            const data = e.data;
-            const field = e.colDef.field;
-            const newValue = e.newValue;
-            const newItem = {...data};
-            newItem[field] = e.newValue;
-            console.log('onCellEditRequest, updating ' + field + ' to ' + newValue);
-            rowImmutableStore = rowImmutableStore.map((oldItem)=>oldItem.id === newItem.id ? newItem : oldItem);
-            setRowData(rowImmutableStore);
-        },
-        [rowImmutableStore]
-    );
+   // const getRowId = useCallback((params) => params.data.id, []);
+    // const onCellEditRequest = useCallback(
+    //     (e)=>{
+    //         const data = e.data;
+    //         const field = e.colDef.field;
+    //         const newValue = e.newValue;
+    //         const newItem = {...data};
+    //         newItem[field] = e.newValue;
+           
+    //         console.log('onCellEditRequest, updating ' + field + ' to ' + newValue);
+    //         rowImmutableStore = rowImmutableStore.map((oldItem)=>oldItem.id === newItem.id ? newItem : oldItem);
+    //         setRowData(rowImmutableStore);
+    //     },
+    //     [rowImmutableStore]
+    // );
 
-    // const cellClickedListener = useCallback(e=>{       
-    //     console.log("celulaSelecionada",e.data.PRDT_VALOR);
-    // },[]);
+    const cellClickedListener = useCallback(e=>{       
+        console.log("celulaSelecionada",e.data.PRDT_VALOR);
+    },[]);
 
 
     useEffect(() => {
@@ -118,6 +157,7 @@ function ListarProdutos(){
 
 
     function buscarProdutos(){
+      //  setdataN(new Date());
         let dados = {token};
         apiProdutosService.getProdutos(dados)
         .then((res)=>{
@@ -127,7 +167,7 @@ function ListarProdutos(){
            }else{
             setListaProdutos(res.data); 
             (res.data).forEach((item, index)=>(item.id = index));
-            rowImmutableStore = res.data;
+           rowImmutableStore = (res.data);           
             setRowData(rowImmutableStore); 
 
            }
@@ -155,21 +195,7 @@ function ListarProdutos(){
         })
     }
 
-// function deletarProduto(id){
-//     let dados = {id};
-//     if(window.confirm("deseja excluir o item ?") ){
-       
-//         apiProdutosService.deleteProduto(dados)
-//         .then((res)=>{
-//             alert(res.data); 
-//             buscarProdutos(); 
-//         })
-//         .catch((res)=>{
-//             console.log(res);
-//         })
-//     }  
-
-// }
+    
 
 return(
     <div>        
@@ -178,16 +204,19 @@ return(
 
         <div className="centralizar">
         <button onClick={()=>navigate("/home")}  > HOME</button>
+        <button onClick={(e)=>adicionar(e)}  > ADD </button>
         <button onClick={()=>navigate("/cadastrarProdutos/0")}  > CADASTRAR NOVO PRODUTO</button>
         <button onClick={(e)=>updateProdutos(e)}  > SALVAR ALTERAÇÕES</button>
         <button onClick={(e)=>logout(e)}  > SAIR</button>
         </div>  
-        <div id="myGrid" className="ag-theme-alpine" style={{width : "100%", height : 400}}>
+        <div id="myGrid" className="ag-theme-alpine" style={{width : "100%", height : 400}}>         
             <AgGridReact
+              //  onGridReady={params=>this.gridRef = params.api}
                 rowData={rowData}
                 columnDefs={columnDefs}
                 defaultColDef={defaultColDef}  
                 getRowId={getRowId}  
+                onCellEditRequest={true}
                 animateRows={true} // Optional - set to 'true' to have rows animate when sorted
                 rowSelection='multiple' // Options - allows click selection of rows
                // onCellClicked={cellClickedListener} // Optional - registering for Grid Event
@@ -195,16 +224,11 @@ return(
                 enableRangeSelection={true}
                 paginationPageSize={10}    
                 editType={'fullRow'}            
-                paginationAutoPageSize={[5,10,15]}      
-
+                paginationAutoPageSize={[5,10,15]}                     
                 
-                
-            />
-   
+            />  
 
-        </div>
-
-        
+        </div>      
 
 
     </div>
@@ -217,7 +241,108 @@ export default ListarProdutos;
 
 
 
-/** <div className="centralizar tableLista" >
+/** 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+// function adicionar(e){
+//     e.preventDefault();
+//     rowImmutableStore.push(
+//         {
+//             PRDT_DESCRICAO: "",
+//             PRDT_CODIGO: "",
+//             PRDT_VALOR: "",
+//             PRDT_DT_VALIDADE: "",
+//             PRDT_ID: "",   
+                         
+            
+        
+//         },
+//       setRowData(rowImmutableStore)
+
+//     )
+  
+   
+//    // console.log(rowData);
+    
+
+// }
+// let newCount = 1;
+
+// const onCellEditRequest = useCallback(
+//     (e)=>{
+//         const data = e.data;
+//         const field = e.colDef.field;
+//         const newValue = e.newValue;
+//         const newItem = {...data};
+//         newItem[field] = e.newValue;
+       
+//         console.log('onCellEditRequest, updating ' + field + ' to ' + newValue);
+//         rowImmutableStore = rowImmutableStore.map((oldItem)=>oldItem.id === newItem.id ? newItem : oldItem);
+//         setRowData(rowImmutableStore);
+//     },
+//     [rowImmutableStore]
+// );
+
+   
+
+
+// const adicionar = () => {
+
+//   const newData = {
+//     PRDT_ID: 'Toyota ' + newCount,
+//     PRDT_DESCRICAO: 'Celica ' + newCount,
+//     PRDT_CODIGO: 35000 + newCount * 17,
+//     PRDT_VALOR: 'Headless',
+//     PRDT_DT_VALIDADE: 'Little',
+  
+//   };
+//   newCount++;
+ 
+//   return setRowData(rowImmutableStore.push(newData));
+//   [rowImmutableStore]
+// };
+
+
+
+
+
+
+
+
+
+
+
+
+ * const adicionar = useCallback(
+        (e)=>{
+            const newData =[ {
+                PRDT_ID: newCount,
+                PRDT_DESCRICAO: '0 ' + newCount,
+                PRDT_CODIGO: 35000 + newCount * 17,
+                PRDT_VALOR: 'Headless',
+                PRDT_DT_VALIDADE: 'Little',
+              
+              }];
+              newCount++;
+            let lista  = rowImmutableStore.concat(newData);
+              console.log(lista)
+             
+              return setRowData(lista);
+           
+        },
+        [rowImmutableStore]
+    );
+ * 
+ * 
+ * 
+ * 
+ * 
+ * <div className="centralizar tableLista" >
          <table>
          <tbody>
                  <tr style={{backgroundColor : "silver"}} >

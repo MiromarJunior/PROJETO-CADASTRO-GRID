@@ -271,6 +271,7 @@ router.post("/editarListaProdutos", async(req, res)=> {
   let {lista,token} = req.body;
   let connection = await oracledb.getConnection(dbConfig);
   let result;
+  console.log(req.body);
 
 function formataValorString(valor){
   if(typeof(valor) === "string"){
@@ -287,23 +288,52 @@ try {
         res.send("erroLogin").end();
 
     } else{  
-
+      
       lista.map(async (l)=>{
         try {
+
+          if(l.PRDT_ID === undefined || l.PRDT_ID === null || l.PRDT_ID === "" ){
+
+            await connection.execute ( 
+              ` 
+              INSERT INTO PRODUTO
+                    (PRDT_DESCRICAO, PRDT_CODIGO, PRDT_VALOR, PRDT_DT_VALIDADE, PRDT_ID)
+                     VALUES
+                    ('${l.PRDT_DESCRICAO}','${l.PRDT_CODIGO}',${formataValorString(l.PRDT_VALOR)},
+                    '${l.PRDT_DT_VALIDADE}',                     
+                     SQ_PRDT.NEXTVAL)       
+              
+              
+              `,
+              [],
+              { outFormat  :  oracledb.OUT_FORMAT_OBJECT,
+                autoCommit : true
+              
+              } 
+               );
+           
+          }else{
+
+            await connection.execute (
+              ` UPDATE PRODUTO
+              SET PRDT_DESCRICAO = '${l.PRDT_DESCRICAO}',
+              PRDT_CODIGO = '${l.PRDT_CODIGO}',
+              PRDT_VALOR = ${formataValorString(l.PRDT_VALOR)},
+              PRDT_DT_VALIDADE = '${l.PRDT_DT_VALIDADE}'
+              WHERE PRDT_ID = '${l.PRDT_ID}' `,
+        
+              [],
+              { outFormat  :  oracledb.OUT_FORMAT_OBJECT,
+                autoCommit : true} 
+                 
+               );
+
+
+
+
+          }
           
-       await connection.execute (
-          ` UPDATE PRODUTO
-          SET PRDT_DESCRICAO = '${l.PRDT_DESCRICAO}',
-          PRDT_CODIGO = '${l.PRDT_CODIGO}',
-          PRDT_VALOR = ${formataValorString(l.PRDT_VALOR)},
-          PRDT_DT_VALIDADE = '${l.PRDT_DT_VALIDADE}'
-          WHERE PRDT_ID = '${l.PRDT_ID}' `,
-    
-          [],
-          { outFormat  :  oracledb.OUT_FORMAT_OBJECT,
-            autoCommit : true} 
-             
-           );          
+                
           
           }  catch(error){
             console.log("Erro ao registrar", error)   
