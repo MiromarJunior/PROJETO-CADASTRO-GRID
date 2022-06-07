@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import apiProdutosService, { dataFormatadaInput, updateListaProd } from "../../Service/produtoService";
 import { AgGridReact } from 'ag-grid-react';
 import { valorBR } from "../../Service/utilService";
@@ -20,7 +20,7 @@ function ListarProdutos(){
 
 
     const ButtonDelete = p =>{
-            const deleteP = useCallback(()=> deletarProduto(p.data.PRDT_ID)  );
+            const deleteP =()=> deletarProduto(p.data.PRDT_ID)  ;
             return(<button onClick={deleteP}>DELETE</button> )
     }
     const CorBotao = p =>{       
@@ -46,7 +46,7 @@ function ListarProdutos(){
                     logout();
                 }else{
                 alert(res.data); 
-                buscarProdutos(); 
+                window.location.reload(); 
                 }
             })
             .catch((res)=>{
@@ -92,8 +92,7 @@ function ListarProdutos(){
       const getRowId = useCallback((params) => params.data.id, []);
       const adicionar = ()=>{        
           newData.push({
-                id : rowData.length+1, 
-                                     
+                id : rowData.length+1,                                      
                 PRDT_DESCRICAO: '',
                 PRDT_CODIGO: "",
                 PRDT_VALOR: 0,
@@ -107,6 +106,7 @@ function ListarProdutos(){
               return lista
            
         }
+        
      
 
         // const adicionar = useCallback((addIndex) => {
@@ -186,7 +186,7 @@ function ListarProdutos(){
                 logout();
             }else{
             alert(res.data)
-            buscarProdutos();
+            window.location.reload(); 
             }
 
         })
@@ -204,7 +204,9 @@ return(
 
         <div className="centralizar">
         <button onClick={()=>navigate("/home")}  > HOME</button>
+      
         <button onClick={(e)=>adicionar(e)}  > ADD </button>
+      
         <button onClick={()=>navigate("/cadastrarProdutos/0")}  > CADASTRAR NOVO PRODUTO</button>
         <button onClick={(e)=>updateProdutos(e)}  > SALVAR ALTERAÇÕES</button>
         <button onClick={(e)=>logout(e)}  > SAIR</button>

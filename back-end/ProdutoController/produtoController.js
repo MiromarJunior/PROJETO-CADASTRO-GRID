@@ -213,6 +213,7 @@ router.post("/excluirProduto", async(req, res)=> {
   let connection = await oracledb.getConnection(dbConfig);
   let result;
 
+
 try {
 
 
@@ -271,7 +272,7 @@ router.post("/editarListaProdutos", async(req, res)=> {
   let {lista,token} = req.body;
   let connection = await oracledb.getConnection(dbConfig);
   let result;
-  console.log(req.body);
+
 
 function formataValorString(valor){
   if(typeof(valor) === "string"){
