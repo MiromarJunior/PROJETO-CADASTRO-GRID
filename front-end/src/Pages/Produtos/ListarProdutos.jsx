@@ -205,9 +205,9 @@ return(
         <div className="centralizar">
         <button onClick={()=>navigate("/home")}  > HOME</button>
       
-        <button onClick={(e)=>adicionar(e)}  > ADD </button>
+        <button onClick={(e)=>adicionar(e)}  > NOVO PRODUTO </button>
       
-        <button onClick={()=>navigate("/cadastrarProdutos/0")}  > CADASTRAR NOVO PRODUTO</button>
+        {/* <button onClick={()=>navigate("/cadastrarProdutos/0")}  > CADASTRAR NOVO PRODUTO</button> */}
         <button onClick={(e)=>updateProdutos(e)}  > SALVAR ALTERAÇÕES</button>
         <button onClick={(e)=>logout(e)}  > SAIR</button>
         </div>  
