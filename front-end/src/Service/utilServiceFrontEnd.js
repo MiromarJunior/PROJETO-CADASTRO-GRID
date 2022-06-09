@@ -1,8 +1,4 @@
 
-
-
-
-
  const dataBRa = (data)=>{
     return(
     new Date(data).getFullYear()+"-"+
@@ -19,7 +15,7 @@
   
 
 }
- const dataBR =(data)=>{
+export const dataBR =(data)=>{
     return(        
         ((new Date(data).getDate()) < 10 ? "0"+new Date(data).getDate() : new Date(data).getDate())+"/"
         +((new Date(data).getMonth()+(1)) < 10 ? "0"+(new Date(data).getMonth()+(1)) : (new Date(data).getMonth()+(1))) +"/"
@@ -27,9 +23,27 @@
     )
 }
 
- const valorBR =(data)=>{
+export const valorBR =(data)=>{
     return data.toLocaleString('pt-br', { style: 'currency', currency: 'BRL' })
 }
 
-module.exports ={dataBR};
+export const valorLiquido = (valor, desconto)=>{
+    return (valor - (valor * (desconto/100)));
+}
 
+
+export const criando=(n)=>{
+    let v = n+1
+    const res = {
+        id: v,
+        PRDT_DESCRICAO: '',
+        PRDT_CODIGO: "",
+        PRDT_VALOR: 0,
+        PRDT_DT_VALIDADE: 'dd/mm/yyyy'
+
+    }
+    v++;
+   
+  return res;
+
+}

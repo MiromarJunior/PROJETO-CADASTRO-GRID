@@ -5,7 +5,10 @@ const baseURL = process.env.REACT_APP_API_URL;
 
 const getProdutos = (data)=>{
     return axios.post(`${baseURL}listarProduto`,data);
+   
 } 
+
+
 const getProdutosID = data=>{
     return axios.post(`${baseURL}listarProdutoID`,data);
 } 
