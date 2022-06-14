@@ -31,6 +31,13 @@ export const valorLiquido = (valor, desconto)=>{
     return (valor - (valor * (desconto/100)));
 }
 
+export const  formataValorString = (valor)=>{
+    if(typeof(valor) === "string"){
+    return  valor.replace(",",".");
+    }
+    return valor;
+  }
+
 
 export const criando=(n)=>{
     let v = n+1
@@ -39,7 +46,7 @@ export const criando=(n)=>{
         PRDT_DESCRICAO: '',
         PRDT_CODIGO: "",
         PRDT_VALOR: 0,
-        PRDT_DT_VALIDADE: 'dd/mm/yyyy'
+        PRDT_DT_VALIDADE: 'dd'
 
     }
     v++;

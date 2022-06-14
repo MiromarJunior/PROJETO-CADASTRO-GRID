@@ -34,9 +34,18 @@ const  formataArrayStr = (id)=>{
   
   }
 
+  const formataValorString = (valor)=>{
+    if(typeof(valor) === "string"){
+    return  valor.replace(",",".");
+    }
+    return valor;
+  }
 const valorLiquido = (valor, desconto)=>{
-    return (valor - (valor * (desconto/100)));
+
+ 
+
+    return (formataValorString(valor) - (formataValorString(valor) * (formataValorString(desconto)/100)));
 }
 
-module.exports ={valorLiquido,dataBR,formataArrayStr};
+module.exports ={formataValorString,valorLiquido,dataBR,formataArrayStr};
 

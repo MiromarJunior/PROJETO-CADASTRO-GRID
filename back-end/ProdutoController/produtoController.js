@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 const SECRET = process.env.SECRET;
 const oracledb = require("oracledb");
 const dbConfig = require("../ConfigDB/configDB.js");
-const { dataBR, formataArrayStr, valorLiquido } = require("../Service/utilServiceBackEnd.js");
+const { dataBR, formataArrayStr, valorLiquido, formataValorString } = require("../Service/utilServiceBackEnd.js");
 const app = express();
 app.use(express.json());
 
@@ -14,21 +14,6 @@ router.post("/listarProduto", async(req, res)=> {
   let {token} =req.body;
     let connection = await oracledb.getConnection(dbConfig);
     let result;
-
-  //   jwt.verify(token, SECRET, (err, decoded) => {
-  //     if (err) {
-  //         console.log(err, "err");
-  //         erroAcesso = "erroLogin";
-
-  //     } else{         
-          
-  //     }
-  // })
-
-
-
-
-
 
   try {
 
@@ -75,141 +60,10 @@ router.post("/listarProduto", async(req, res)=> {
 
 });
 
-// router.post("/cadastrarProduto", async(req, res)=> {
-//   let = {descricao, codigo,valor,dataVal,id, token} = req.body;
-  
-//   let connection = await oracledb.getConnection(dbConfig);
-//   let data_brasileira = dataVal.split('-').reverse().join('/');
-
-//   let result;
-
-// try {
-
-
-
-//   jwt.verify(token, SECRET, async (err, decoded) => {
-//     if (err) {
-//         console.log(err, "err");
-//         erroAcesso = "erroLogin";
-//         res.send("erroLogin").end();
-
-//     } else{  
-//       if(id > 0) {
-//         await connection.execute( `
-    
-//         UPDATE PRODUTO
-//         SET PRDT_DESCRICAO = :DESCRICAO,
-//         PRDT_CODIGO =:CODIGO,
-//         PRDT_VALOR = :VALOR,
-//         PRDT_DT_VALIDADE = :DATA
-//         WHERE  PRDT_ID = :ID   
-        
-        
-//         ` ,[descricao,codigo,valor,data_brasileira,id],{
-    
-//           outFormat  :  oracledb.OUT_FORMAT_OBJECT,
-//           autoCommit : true
-    
-    
-//         });
-    
-//         res.send("Atualizado com sucesso !").status(200).end();
-    
-    
-    
-//       }else{
-    
-    
-    
-//        await connection.execute ( 
-//           ` 
-//           INSERT INTO PRODUTO
-//                 (PRDT_DESCRICAO, PRDT_CODIGO, PRDT_VALOR, PRDT_DT_VALIDADE, PRDT_ID)
-//                  VALUES
-//                 (:DESCRICAO,
-//                  :CODIGO,
-//                   :VALOR,
-//                :VALIDADE,
-//                  SQ_PRDT.NEXTVAL)       
-          
-          
-//           `,
-//           [descricao, codigo,valor,data_brasileira],
-//           { outFormat  :  oracledb.OUT_FORMAT_OBJECT,
-//             autoCommit : true
-          
-//           } 
-//            );
-//            res.send("Cadastrado com sucesso!").status(200).end();
-//           }   
-//     }
-
-// })   
-  
-    
-// } catch (error) {
-//     console.error(error);
-//     res.send("erro de conexao").status(500);
-    
-// }finally {
-//     if(connection){
-//         try {
-//             await connection.close();
-            
-//         } catch (error) {
-//           console.error(error);              
-//         }
-//     }
-// }
-
-
-
-
-// });
-
-// router.post("/listarProdutoID", async(req, res)=> {
-//   let {id} = req.body;
-//   let connection = await oracledb.getConnection(dbConfig);
-//   let result;
-
-
-
-// try {
-
-//   result = await connection.execute ( 
-
-//       ` SELECT  * FROM PRODUTO WHERE PRDT_ID = :ID
-//       `,
-//       [id],
-//       { outFormat  :  oracledb.OUT_FORMAT_OBJECT} 
-//        );
-//        res.send(result.rows).status(200);
-      
-  
-    
-// } catch (error) {
-//     console.error(error);
-//     res.send("erro de conexao").status(500);
-    
-// }finally {
-//     if(connection){
-//         try {
-//             await connection.close();
-          
-//         } catch (error) {
-//           console.error(error);              
-//         }
-//     }
-// }
-
-
-
-
-// });
-
 
 router.post("/excluirProduto", async(req, res)=> {
   let {id ,token} = req.body;
+  console.log(formataArrayStr(id))
   let connection = await oracledb.getConnection(dbConfig);
 try {
   jwt.verify(token, SECRET, async (err, decoded) => {
@@ -261,13 +115,17 @@ router.post("/editarListaProdutos", async(req, res)=> {
 
 
 
+const objExterno = (lista).map(
+  ({PRDT_DESCRICAO,PRDT_CODIGO,PRDT_VALOR,PRDT_DT_VALIDADE,PRDT_ID,PRDT_PERC_DESCONTO})=>
 
-function formataValorString(valor){
-  if(typeof(valor) === "string"){
-  return  valor.replace(",",".");
-  }
-  return valor;
-}
+  ({PRDT_DESCRICAO : PRDT_DESCRICAO,PRDT_CODIGO : PRDT_CODIGO,
+      PRDT_VALOR : PRDT_VALOR ,PRDT_DT_VALIDADE : PRDT_DT_VALIDADE,
+      PRDT_ID : PRDT_ID,
+      PRDT_PERC_DESCONTO : formataValorString(PRDT_PERC_DESCONTO) , 
+      PRDT_VALOR_LIQUIDO : formataValorString(valorLiquido(PRDT_VALOR,PRDT_PERC_DESCONTO )) 
+     }))
+  
+
 
 try {
   jwt.verify(token, SECRET, async (err, decoded) => {
@@ -278,7 +136,7 @@ try {
 
     } else{  
       
-      lista.map(async (l)=>{
+      objExterno.map(async (l)=>{
         try {
 
           if(l.PRDT_ID === undefined || l.PRDT_ID === null || l.PRDT_ID === "" ){
@@ -286,11 +144,11 @@ try {
             await connection.execute ( 
               ` 
               INSERT INTO PRODUTO
-                    (PRDT_DESCRICAO, PRDT_CODIGO, PRDT_VALOR, PRDT_DT_VALIDADE,PRDT_ID)
+                    (PRDT_DESCRICAO, PRDT_CODIGO, PRDT_VALOR, PRDT_DT_VALIDADE,PRDT_ID,PRDT_PERC_DESCONTO,PRDT_VALOR_LIQUIDO)
                      VALUES
                     ('${l.PRDT_DESCRICAO}','${l.PRDT_CODIGO}',${formataValorString(l.PRDT_VALOR)},
                     '${l.PRDT_DT_VALIDADE}',                     
-                     SQ_PRDT.NEXTVAL)       
+                     SQ_PRDT.NEXTVAL, '0', '0')       
               
               
               `,
@@ -308,7 +166,9 @@ try {
               SET PRDT_DESCRICAO = '${l.PRDT_DESCRICAO}',
               PRDT_CODIGO = '${l.PRDT_CODIGO}',
               PRDT_VALOR = ${formataValorString(l.PRDT_VALOR)},
-              PRDT_DT_VALIDADE = '${l.PRDT_DT_VALIDADE}'
+              PRDT_DT_VALIDADE = '${l.PRDT_DT_VALIDADE}',
+              PRDT_PERC_DESCONTO = ${formataValorString(l.PRDT_PERC_DESCONTO)},  
+              PRDT_VALOR_LIQUIDO = ${formataValorString(l.PRDT_VALOR_LIQUIDO)}
              
               WHERE PRDT_ID = '${l.PRDT_ID}' `,
         

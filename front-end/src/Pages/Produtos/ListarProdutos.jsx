@@ -2,15 +2,16 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "r
 import {useNavigate } from "react-router-dom";
 import apiProdutosService, { updateListaProd } from "../../Service/produtoService";
 import { AgGridReact } from 'ag-grid-react';
-import { criando, valorBR, valorLiquido } from "../../Service/utilServiceFrontEnd";
+import { criando, formataValorString, valorBR, valorLiquido } from "../../Service/utilServiceFrontEnd";
 import { AuthContext } from "../../Autenticação/validacao";
 
-let desconto =  [];
+
 
 let rowImmutableStore = [];
+
 function ListarProdutos() {
-    const [listaProdutos, setListaProdutos] = useState([]);
     const [rowData, setRowData] = useState([]);
+
     const navigate = useNavigate();
     const token = localStorage.getItem("token");
     const { logout } = useContext(AuthContext);
@@ -18,48 +19,17 @@ function ListarProdutos() {
     const gridRef = useRef();
 
 
-
     const ButtonDelete = p => {
         const deleteP = () => deletarProduto(p.data.PRDT_ID);
         return (<button onClick={deleteP}>DELETE</button>)
     }
-    const CorBotao = p => {
-        return (<div className="corFont">{p.value}</div>)
-    }
-
-    // const InputData = p => {
-    //     return (<input value={desconto} onChange={(e) => setdesconto(e.target.value)} />)
-    // }
-
-
-
-
-    // const deletarProduto = (id) => {
-    //     let dados = { id, token };
-    //     if (window.confirm("deseja excluir o item ?")) {
-    //         apiProdutosService.deleteProduto(dados)
-    //             .then((res) => {
-    //                 if (res.data === "erroLogin") {
-    //                     window.alert("Sessão expirada, Favor efetuar um novo login");
-    //                     logout();
-    //                 } else {
-    //                     alert(res.data);
-    //                     window.location.reload();
-    //                 }
-    //             })
-    //             .catch((res) => {
-    //                 console.log(res);
-    //             })
-    //     }
-
-    // };
-
+  
     const deletarProduto = ()=>{
         const dadosSelecionados = gridRef.current.api.getSelectedNodes();
-        const idSelecionados = dadosSelecionados.map(
+        dadosSelecionados.map(
             node => node.data.id);
             let id = [];
-        dadosSelecionados.map((l)=>{
+        dadosSelecionados.forEach((l)=>{
             id.push(l.data.PRDT_ID)
         })
         let dados = { id, token };
@@ -83,17 +53,21 @@ function ListarProdutos() {
         // setRowData(rowImmutableStore);
     }
 
-    const Simple = (p) => {
-      
-        return  p.data.PRDT_PERC_DESCONTO+" %"  
+  const CorFundo =()=>{
+      return  {backgroundColor : '#DCDCDC', margin : "1px"};
+  }
 
-    }
+
+console.log(rowImmutableStore);
+
     const [columnDefs, setColumnDefs] = useState([
 
         //{ field: 'PRDT_ID', headerName: "ID", editable: false, cellRenderer: Simple },
         { field: 'PRDT_DESCRICAO', headerName: "DESCRIÇÃO",
         checkboxSelection: true,
         headerCheckboxSelection: true, },
+
+
         { field: 'PRDT_CODIGO', headerName: "CÓDIGO" },
         
         {
@@ -102,10 +76,47 @@ function ListarProdutos() {
                 return valorBR(p.data.PRDT_VALOR)
             }
         },
+        { field: 'PRDT_DT_VALIDADE', headerName: "DATA VALIDADE" },
+        {
+            field: 'PRDT_PERC_DESCONTO', headerName: " % DESCONTO",
+          valueGetter : p =>{
+              if(p.data.PRDT_PERC_DESCONTO === null ||p.data.PRDT_PERC_DESCONTO  === undefined || !p.data.PRDT_ID){
+                  return 0 +"%"
+              }else if( typeof(p.data.PRDT_PERC_DESCONTO)=== "string"){
+                  return formataValorString(p.data.PRDT_PERC_DESCONTO)
+              }
+              
+              else {
+
+                  return p.data.PRDT_PERC_DESCONTO + "%"
+              }
+
+          }
+          
+            
+            
+        },
+        {
+            field: 'PRDT_VALOR_LIQUIDO', headerName: " VALOR LIQUIDO",editable : false, cellStyle : CorFundo,
+            
+            valueGetter: p => {
+                if(!p.data.PRDT_ID){
+                    return 0
+                }else if( typeof(p.data.PRDT_PERC_DESCONTO)=== "string"){
+                        return  valorBR(valorLiquido(p.data.PRDT_VALOR,formataValorString(p.data.PRDT_PERC_DESCONTO)));
+                    }else{
+                        return  valorBR(valorLiquido(p.data.PRDT_VALOR,p.data.PRDT_PERC_DESCONTO));
+
+                    }              
+            
+               
+            }
+           
+      },
 
      
 
-        { field: 'PRDT_DT_VALIDADE', headerName: "DATA VALIDADE" },
+      
         { field: 'EXCLUIR', headerName: "EXCLUIR", cellRenderer: ButtonDelete, editable: false },
 
     ]);
@@ -151,8 +162,7 @@ function ListarProdutos() {
                 if (res.data === "erroLogin") {
                     window.alert("Sessão expirada, Favor efetuar um novo login");
                  return   logout();
-                } else {
-                    setListaProdutos(res.data);
+                } else {                   
                     (res.data).forEach((item, index) => (item.id = index));
                     rowImmutableStore = (res.data);
                   return  setRowData(rowImmutableStore);
@@ -203,7 +213,7 @@ function ListarProdutos() {
                 <button onClick={(e) => updateProdutos(e)}  > SALVAR ALTERAÇÕES</button>
                 <button onClick={(e) => logout(e)}  > SAIR</button>
             </div>
-            <div id="myGrid" className="ag-theme-alpine" style={{ width: "100%", height: 400 }}>
+            <div id="myGrid" className="ag-theme-alpine" style={{ width: "100%", height: 400}}>
                 <AgGridReact
                     ref={gridRef}
                     rowData={rowData}
@@ -216,7 +226,7 @@ function ListarProdutos() {
                     // onCellClicked={cellClickedListener} // Optional - registering for Grid Event
                     pagination={true}
                     enableRangeSelection={true}
-                    paginationPageSize={5}
+                    paginationPageSize={10}
                     editType={'fullRow'}
                    
 
